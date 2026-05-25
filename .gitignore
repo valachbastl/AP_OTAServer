@@ -1,0 +1,28 @@
+# Konfigurační soubor s tajemstvími
+config.php
+
+# Databáze
+data/ota.db
+data/ota.db-shm
+data/ota.db-wal
+
+# Firmware binárky (uživatelská data – neignoruj .gitkeep)
+data/firmware/**
+!data/firmware/.gitkeep
+
+# Dokumenty (uživatelská data – neignoruj .gitkeep)
+data/docs/**
+!data/docs/.gitkeep
+
+# Lokální přepisy konfigurace
+.htaccess_local
+
+# Záložní kódy a jiné citlivé soubory v rootu
+*.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

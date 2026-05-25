@@ -1,0 +1,41 @@
+# ── Rewrite engine ────────────────────────────────────────────────────────────
+RewriteEngine on
+RewriteBase /
+
+# ── Vynucení HTTPS ────────────────────────────────────────────────────────────
+# Druhá podmínka zajišťuje, že se neredirectuje když CF proxy posílá HTTP
+# s hlavičkou X-Forwarded-Proto: https (jinak vznikne nekonečná smyčka)
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# ── Blokování interních adresářů ──────────────────────────────────────────────
+RewriteRule ^(inc|lng|php)/  -  [F,L]
+
+# ── Blokování záložních a dočasných souborů ───────────────────────────────────
+RewriteRule \.(bak|orig|swp|swo|tmp|log|~)$  -  [F,L]
+
+# ── HTTP hlavičky ─────────────────────────────────────────────────────────────
+<IfModule mod_headers.c>
+    # Zákaz indexace vyhledávači
+    Header set X-Robots-Tag "noindex, nofollow"
+
+    # HSTS – browsery si zapamatují HTTPS na 1 rok
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+    # Content Security Policy
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';"
+</IfModule>
+
+# ── OTA endpoint – zákaz cachování (Cloudflare i prohlížeč) ──────────────────
+<Files "ota.php">
+    Header set Cache-Control "no-store, no-cache, must-revalidate"
+    Header set Pragma "no-cache"
+</Files>
+
+# ── Zákaz výpisu obsahu adresářů ──────────────────────────────────────────────
+Options -Indexes
+
+# ── PHP: vypnutí chybového výstupu v produkci ─────────────────────────────────
+php_flag  display_errors  off
+php_value error_reporting 0
