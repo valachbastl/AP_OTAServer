@@ -1,6 +1,6 @@
 <?php
 define('APP_NAME',    'AP OTA Server');
-define('APP_VERSION', '1.0.0');
+define('APP_VERSION', '1.1.0');
 
 require_once dirname(__FILE__) . '/config.php';
 require_once dirname(__FILE__) . '/php/functions.php';

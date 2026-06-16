@@ -93,6 +93,8 @@ function initSchema(PDO $db): void {
             last_download_at     DATETIME,
             last_download_fw     TEXT,
             monitoring_disabled  INTEGER NOT NULL DEFAULT 0,
+            updates_disabled     INTEGER NOT NULL DEFAULT 0,
+            allow_downgrade      INTEGER NOT NULL DEFAULT 0,
             created_at           DATETIME DEFAULT (datetime('now', 'localtime'))
         );
 
@@ -144,8 +146,10 @@ function initSchema(PDO $db): void {
             ON login_attempts(ip_address, created_at);
     ");
 
-    // Migrace: přidat sloupec monitoring_disabled (ignoruje chybu, pokud již existuje)
+    // Migrace stávající DB: přidat nové sloupce (ignoruje chybu, pokud již existují)
     try { $db->exec("ALTER TABLE devices ADD COLUMN monitoring_disabled INTEGER NOT NULL DEFAULT 0"); } catch (\PDOException $e) {}
+    try { $db->exec("ALTER TABLE devices ADD COLUMN updates_disabled INTEGER NOT NULL DEFAULT 0"); } catch (\PDOException $e) {}
+    try { $db->exec("ALTER TABLE devices ADD COLUMN allow_downgrade INTEGER NOT NULL DEFAULT 0"); } catch (\PDOException $e) {}
 
     // Výchozí admin uživatel (bez TOTP – spáruje se při prvním spuštění)
     $existing = $db->query("SELECT id FROM users WHERE username='admin'")->fetch();

@@ -158,7 +158,7 @@ include dirname(__FILE__) . '/header.php';
                     <tr data-device-key="<?= e($d['device_key']) ?>" data-group="<?= e($d['group_slug']) ?>" data-type="<?= e($d['type_slug']) ?>" data-status="<?= $status ?>">
                         <td data-dash="badge"><?= deviceStatusBadge($status) ?></td>
                         <td>
-                            <span class="fw-semibold"><?= e($d['label'] ?: formatMac($d['device_key'])) ?></span>
+                            <span class="fw-semibold"><?= e($d['label'] ?: formatMac($d['device_key'])) ?></span><?= devicePolicyBadges($d) ?>
                             <?php if ($d['label']): ?>
                                 <div class="text-muted" style="font-size:0.72rem"><code><?= e(formatMac($d['device_key'])) ?></code></div>
                             <?php endif; ?>

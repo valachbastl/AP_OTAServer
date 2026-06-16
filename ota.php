@@ -48,11 +48,36 @@ if (strlen($deviceKey) < 6 || strlen($deviceKey) > 17) {
 
 upsertDevice($deviceKey, $group, $type, $component, $hw, $fwVersion, $uptime, $interval);
 
+$device = getDevice($deviceKey);
 $latest = getLatestFirmware($group, $type, $component, $hw);
 
 if (!$latest) {
     http_response_code(404);
     exit('No firmware found');
+}
+
+// Per-zařízení politika aktualizací
+//   updates_disabled = 1  → zařízení zmrazeno, nikdy nedostane jiný FW (test nového FW jen na vybraných kusech)
+//   allow_downgrade  = 0  → nenabízet starší verzi, než zařízení právě běží (výchozí stav)
+$blocked = false;
+if ((int)($device['updates_disabled'] ?? 0)) {
+    $blocked = true;
+} elseif (!(int)($device['allow_downgrade'] ?? 0)
+          && version_compare($latest['fw_version'], $fwVersion, '<')) {
+    $blocked = true;
+}
+
+// Pokud je aktualizace blokovaná, tváříme se, že žádná novější verze není:
+//   krok 1 vrátí verzi, kterou zařízení hlásí → ESP vidí shodu a nestahuje
+//   krok 2 (download) odmítneme, aby to nešlo obejít přidáním &download=1
+if ($blocked) {
+    if ($download) {
+        http_response_code(404);
+        exit('No update available');
+    }
+    header('Content-Type: text/plain; charset=utf-8');
+    echo $fwVersion;
+    exit;
 }
 
 // Krok 1: vrátit číslo nejnovější verze, ESP rozhodne samo

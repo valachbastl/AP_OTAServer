@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.0] - 2026-06-16
+
+### Politika aktualizací per zařízení
+- **Zakázat aktualizace** per zařízení — zmrazení na aktuální verzi i když je k dispozici novější firmware; ESP při kontrole dostane vlastní verzi a nestahuje. Umožňuje otestovat nový FW jen na vybraných kusech, než se nasadí do celého parku.
+- **Zákaz downgrade** (výchozí stav) — server nenabídne firmware se starším číslem verze, než zařízení právě běží; porovnání přes `version_compare`. Per zařízení lze povolit pro vývoj a testování (přepínač „Povolit downgrade").
+- Obě omezení se vynucují i v kroku stažení (`&download=1`), nelze je obejít.
+- Migrace: nové sloupce `updates_disabled` a `allow_downgrade` se automaticky přidají i do stávající databáze.
+
+### Licence
+- Projekt vydán pod licencí MIT (`LICENSE`).
+
 ## [1.0.0] - 2026-05-28
 
 První veřejné vydání.

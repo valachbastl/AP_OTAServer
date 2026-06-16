@@ -33,7 +33,7 @@ include dirname(__FILE__) . '/header.php';
             <div class="card shadow-sm mb-3">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <span class="fw-semibold"><?= e(__('dev_info')) ?></span>
-                    <?= deviceStatusBadge($status) ?>
+                    <span><?= deviceStatusBadge($status) ?><span id="devicePolicyBadges"><?= devicePolicyBadges($device) ?></span></span>
                 </div>
                 <div class="card-body">
                     <table class="table table-sm table-borderless mb-0 small">
@@ -115,6 +115,35 @@ include dirname(__FILE__) . '/header.php';
                                        <?= (int)($device['monitoring_disabled'] ?? 0) ? 'checked' : '' ?>>
                                 <label class="form-check-label small" for="chkMonDisabled">
                                     <?= e(__('dev_monitoring_disabled')) ?>
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary w-100"><?= e(__('btn_save')) ?></button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-header fw-semibold small"><?= e(__('dev_update_policy')) ?></div>
+                <div class="card-body">
+                    <form id="formDeviceUpdates">
+                        <input type="hidden" name="action" value="update_device_updates">
+                        <input type="hidden" name="device_key" value="<?= e($deviceKey) ?>">
+                        <div class="mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="updates_disabled" id="chkUpdatesDisabled"
+                                       <?= (int)($device['updates_disabled'] ?? 0) ? 'checked' : '' ?>>
+                                <label class="form-check-label small" for="chkUpdatesDisabled">
+                                    <?= e(__('dev_updates_disabled')) ?>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="allow_downgrade" id="chkAllowDowngrade"
+                                       <?= (int)($device['allow_downgrade'] ?? 0) ? 'checked' : '' ?>>
+                                <label class="form-check-label small" for="chkAllowDowngrade">
+                                    <?= e(__('dev_allow_downgrade')) ?>
                                 </label>
                             </div>
                         </div>
@@ -319,7 +348,7 @@ include dirname(__FILE__) . '/header.php';
                         <tr data-device-key="<?= e($d['device_key']) ?>" data-group="<?= e($d['group_slug']) ?>" data-type="<?= e($d['type_slug']) ?>">
                             <td><?= deviceStatusBadge($s) ?></td>
                             <td data-label-cell data-label-value="<?= e($d['label'] ?? '') ?>">
-                                <span class="label-text"><?= e($d['label'] ?: '—') ?></span>
+                                <span class="label-text"><?= e($d['label'] ?: '—') ?></span><?= devicePolicyBadges($d) ?>
                                 <?php if (isAdmin()): ?>
                                 <button class="btn btn-link btn-sm p-0 ms-1 text-muted" data-edit-label="<?= e($d['device_key']) ?>">
                                     <i class="bi bi-pencil"></i>
@@ -402,16 +431,34 @@ document.querySelectorAll('tbody tr[data-device-key]').forEach(row => {
     });
 })();
 
-const settingsForm = document.getElementById('formDeviceSettings');
-if (settingsForm) {
-    settingsForm.addEventListener('submit', async e => {
-        e.preventDefault();
-        const data = Object.fromEntries(new FormData(settingsForm));
-        const res  = await apiPost('./ajax/api.php', data);
-        if (res.ok) showToast(Lang.settingsSaved);
-        else showToast(res.error || Lang.error, 'danger');
-    });
+function refreshPolicyBadges() {
+    const container = document.getElementById('devicePolicyBadges');
+    if (!container) return;
+    let html = '';
+    const up = document.getElementById('chkUpdatesDisabled');
+    const dg = document.getElementById('chkAllowDowngrade');
+    if (up && up.checked) {
+        const t = document.querySelector('label[for="chkUpdatesDisabled"]').textContent.trim();
+        html += '<i class="bi bi-lock-fill text-warning ms-2" title="' + t + '"></i>';
+    }
+    if (dg && dg.checked) {
+        const t = document.querySelector('label[for="chkAllowDowngrade"]').textContent.trim();
+        html += '<i class="bi bi-arrow-down-circle text-info ms-2" title="' + t + '"></i>';
+    }
+    container.innerHTML = html;
 }
+
+document.querySelectorAll('#formDeviceSettings, #formDeviceUpdates').forEach(form => {
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(form));
+        const res  = await apiPost('./ajax/api.php', data);
+        if (res.ok) {
+            showToast(Lang.settingsSaved);
+            if (form.id === 'formDeviceUpdates') refreshPolicyBadges();
+        } else showToast(res.error || Lang.error, 'danger');
+    });
+});
 
 const btnDelete = document.getElementById('btnDeleteDevice');
 if (btnDelete) {

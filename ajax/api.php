@@ -132,6 +132,13 @@ match ($action) {
         echo json_encode(['ok' => updateDeviceSettings($key, $interval, $tolerance, $monitoringDisabled)]);
     })(),
 
+    'update_device_updates' => (function () {
+        $key             = sanitizeDeviceKey($_POST['device_key'] ?? '');
+        $updatesDisabled = isset($_POST['updates_disabled']) ? 1 : 0;
+        $allowDowngrade  = isset($_POST['allow_downgrade']) ? 1 : 0;
+        echo json_encode(['ok' => updateDeviceUpdatePolicy($key, $updatesDisabled, $allowDowngrade)]);
+    })(),
+
     'delete_device' => (function () {
         $key = sanitizeDeviceKey($_POST['device_key'] ?? '');
         echo json_encode(['ok' => deleteDevice($key)]);

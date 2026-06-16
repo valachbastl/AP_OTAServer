@@ -417,6 +417,11 @@ function updateDeviceSettings(string $deviceKey, int $interval, int $tolerance, 
     return $stmt->execute([$interval, $tolerance, $monitoringDisabled, $deviceKey]);
 }
 
+function updateDeviceUpdatePolicy(string $deviceKey, int $updatesDisabled, int $allowDowngrade): bool {
+    $stmt = getDB()->prepare('UPDATE devices SET updates_disabled=?, allow_downgrade=? WHERE device_key=?');
+    return $stmt->execute([$updatesDisabled, $allowDowngrade, $deviceKey]);
+}
+
 function deleteDevice(string $deviceKey): bool {
     $db   = getDB();
     $docs = $db->prepare('SELECT id FROM documents WHERE entity_type=\'device\' AND device_key=?');
@@ -493,6 +498,18 @@ function deviceStatusBadge(string $status): string {
         'never'      => '<span class="badge bg-secondary"><i class="bi bi-question-circle"></i>'  . $t('status_never')      . '</span>',
         default      => '<span class="badge bg-secondary"><i class="bi bi-circle"></i>'           . $t('status_online')     . '</span>',
     };
+}
+
+// Ikonky pro zařízení s nestandardní politikou aktualizací (zobrazí se jen při odchylce od defaultu)
+function devicePolicyBadges(array $device): string {
+    $out = '';
+    if ((int)($device['updates_disabled'] ?? 0)) {
+        $out .= '<i class="bi bi-lock-fill text-warning ms-2" title="' . e(__('dev_updates_disabled')) . '"></i>';
+    }
+    if ((int)($device['allow_downgrade'] ?? 0)) {
+        $out .= '<i class="bi bi-arrow-down-circle text-info ms-2" title="' . e(__('dev_allow_downgrade')) . '"></i>';
+    }
+    return $out;
 }
 
 // ── DOKUMENTY ─────────────────────────────────────────────────────────────────

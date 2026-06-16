@@ -2,16 +2,17 @@
 
 A simple and secure OTA (Over-The-Air) server for managing ESP device firmware. Built with plain PHP (no frameworks), SQLite database, and Bootstrap 5 UI.
 
-> **Personal project for self-hosting.** All rights reserved.
+> Released under the [MIT License](LICENSE).
 
 ## Features
 
 - **Firmware management** – hierarchical structure: group → device type → component → HW version → firmware; rename and delete at every level; download binaries from the UI
 - **Automatic device registration** – ESP registers itself on first check-in (identified by MAC address)
 - **Monitoring** – device status overview, uptime, firmware versions, offline detection with configurable interval and tolerance; offline detection can be disabled per device; dashboard auto-refreshes every 30 s
+- **Update policy per device** – freeze a device on its current version (disable updates) to test new firmware on selected units only; downgrade to an older version number is blocked by default and can be enabled per device for development
 - **Filtering** – filter devices by group and device type in both the dashboard and device list; stat cards reflect the active filter
 - **Event history** – log of check-ins, downloads and firmware updates with configurable retention
-- **Versioning** – format `YY.M.PATCH` (e.g. `26.5.0`)
+- **Versioning** – format `YY.M.PATCH` (e.g. `26.6.0`)
 - **User management** – admin and viewer roles; admin can add, delete and edit users (name and role)
 - **Server clock** – live server time with timezone displayed in the topbar on every page (login included); useful for diagnosing TOTP issues caused by clock drift
 - **Security** – TOTP authentication (Google Authenticator), CSRF protection, IP rate limiting, prepared statements
@@ -31,6 +32,8 @@ A simple and secure OTA (Over-The-Air) server for managing ESP device firmware. 
 3. Generate a random 64-character `APP_SECRET` and set it in `config.php`
 4. Make the `data/` directory writable
 5. Open the app in a browser → the authenticator pairing wizard starts automatically
+
+> **First run:** on a fresh installation the database is created automatically and a single default user `admin` (role: administrator) is seeded **without TOTP**. The first time you open the app, this account waits to be paired — the wizard generates the TOTP secret and backup codes. There is no default password; access is protected solely by the authenticator pairing.
 
 ### Directory permissions (Linux / shared hosting)
 ```bash
@@ -57,7 +60,7 @@ chown www-data:www-data data/
 
 ```
 GET /ota.php?group=home&type=control-unit&component=board&hw=1.0
-            &device=aabbccddeeff&fw=26.5.0&uptime=3600&interval=3600
+            &device=aabbccddeeff&fw=26.6.0&uptime=3600&interval=3600
 ```
 
 | Parameter   | Description                      | Example        |
@@ -67,7 +70,7 @@ GET /ota.php?group=home&type=control-unit&component=board&hw=1.0
 | `component` | Component (chip)                 | `board`        |
 | `hw`        | Hardware version                 | `1.0`          |
 | `device`    | MAC address (no separators)      | `aabbccddeeff` |
-| `fw`        | Current firmware version         | `26.5.0`       |
+| `fw`        | Current firmware version         | `26.6.0`       |
 | `uptime`    | Uptime in seconds                | `3600`         |
 | `interval`  | Check-in interval in seconds     | `3600`         |
 
@@ -75,7 +78,9 @@ GET /ota.php?group=home&type=control-unit&component=board&hw=1.0
 - `200` plain text → latest version number (ESP decides whether to download)
 - `200` binary → with `&download=1`, firmware binary
 - `403` → invalid `X-OTA-Key` (when `OTA_AUTH = true`)
-- `404` → no firmware found for this combination
+- `404` → no firmware found for this combination, or no update available (device frozen / would be a downgrade)
+
+> When updates are disabled for a device, or the latest firmware would be a downgrade and downgrade is not allowed, the endpoint returns the device's **own current version** in step 1 (so the ESP sees no difference and skips the download) and `404` on a forced `&download=1`.
 
 ### ESP-IDF / PlatformIO
 
@@ -127,3 +132,7 @@ AP_OTAServer/
 ## Author
 
 Petr Adámek
+
+## License
+
+Released under the [MIT License](LICENSE). © 2026 Petr Adámek
